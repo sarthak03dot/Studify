@@ -31,7 +31,7 @@ export default function AboutScreen() {
                     </Text>
 
                     <Text style={[styles.text, { color: isDark ? '#ccc' : '#4b5563', marginTop: 12 }]}>
-                        Built with ❤️ by the Studify Team.
+                        Built with {'\u2665'} by the Studify Team.
                     </Text>
                 </View>
 
@@ -40,11 +40,33 @@ export default function AboutScreen() {
                     <Text style={[styles.text, { color: isDark ? '#ccc' : '#4b5563' }]}>
                         Have questions or feedback? Reach out to us at:
                     </Text>
-                    <Text style={[styles.link, { color: '#4f46e5' }]}>support@studify.app</Text>
+                    <Text style={[styles.link, { color: '#4f46e5' }]}>support.studify@gmail.com</Text>
+                </View>
+                <View style={[styles.card, { backgroundColor: isDark ? '#1e1e1e' : '#fff' }]}>
+                    <Text style={[styles.title, { color: isDark ? '#fff' : '#1f2937' }]}>
+                        Privacy Policy
+                    </Text>
+
+                    <Text style={[styles.text, { color: isDark ? '#ccc' : '#4b5563' }]}>
+                        Studify values your privacy. We only collect essential information required
+                        to improve app services, authentication, and user experience. We do not
+                        sell or share your personal data with third-party advertisers.
+                    </Text>
+
+                    <Text style={[styles.text, { color: isDark ? '#ccc' : '#4b5563', marginTop: 12 }]}>
+                        Any data such as notes, downloads, or app usage remains securely stored
+                        and is used solely for enhancing platform features and performance.
+                    </Text>
+
+                    <Text style={[styles.text, { color: isDark ? '#ccc' : '#4b5563', marginTop: 12 }]}>
+                        If you have concerns about how your data is managed, feel free to reach out
+                        at: <Text style={{ color: '#4f46e5' }}>support.studify@gmail.com</Text>
+                    </Text>
                 </View>
 
+
                 <Text style={[styles.footer, { color: isDark ? '#666' : '#9ca3af' }]}>
-                    © 2024 Studify Inc. All rights reserved.
+                    &copy; {new Date().getFullYear()} StudiFy Inc. All rights reserved.
                 </Text>
             </ScrollView>
         </View>

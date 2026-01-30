@@ -168,15 +168,59 @@ export default function ProfileScreen({ navigation }: any) {
                         <Text style={[styles.uploadSubtitle, subTextStyle]}>{item.subject}</Text>
                     </View>
                 </TouchableOpacity>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-                    <Text style={styles.uploadDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
-                    <TouchableOpacity
-                        style={{ padding: 4, backgroundColor: isDark ? '#333' : '#eee', borderRadius: 4 }}
-                        onPress={() => navigation.navigate('UploadResource', { resource: item })}
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: 12,
+                        backgroundColor: isDark ? '#1a1a1a' : '#f9fafb',
+                        paddingVertical: 8,
+                        paddingHorizontal: 12,
+                        borderRadius: 12,
+                        elevation: 2,
+                        shadowColor: '#000',
+                        shadowOpacity: 0.08,
+                        shadowRadius: 3,
+                    }}
+                >
+                    {/* Date */}
+                    <Text
+                        style={{
+                            fontSize: 14,
+                            color: isDark ? '#bdbdbd' : '#4b5563',
+                            fontWeight: '500',
+                        }}
                     >
-                        <Text style={{ fontSize: 18,margin:4, color: isDark ? '#fff' : '#333' }}>Edit</Text>
+                        {new Date(item.createdAt).toLocaleDateString()}
+                    </Text>
+
+                    {/* Edit Button */}
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('UploadResource', { resource: item })}
+                        style={{
+                            backgroundColor: isDark ? '#4f46e5' : '#6366f1',
+                            paddingVertical: 6,
+                            paddingHorizontal: 16,
+                            borderRadius: 20,
+                            shadowColor: '#000',
+                            shadowOpacity: 0.12,
+                            shadowRadius: 4,
+                            elevation: 3,
+                        }}
+                    >
+                        <Text
+                            style={{
+                                fontSize: 14,
+                                fontWeight: '600',
+                                color: '#fff',
+                            }}
+                        >
+                            Edit
+                        </Text>
                     </TouchableOpacity>
                 </View>
+
             </View>
         </Animated.View>
     );
