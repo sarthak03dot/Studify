@@ -15,8 +15,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-const API_URL = "http://localhost:5000/api/auth";
+// const API_URL = "http://localhost:5000/api/auth";
 // const API_URL = "http://10.0.2.2:5000/api/auth";
+const API_URL = "https://studify-backend-15ig.onrender.com/api/auth";
 
 const INACTIVITY_LIMIT_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 

@@ -12,12 +12,7 @@ import { View, Text } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 
-// Placeholder screens
-const FavoritesScreen = () => (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' }}>
-        <Text>Favorites (Coming Soon)</Text>
-    </View>
-);
+
 
 // We won't actually navigate to this, but we need it in the navigator to render the button
 const UploadPlaceholder = () => null;

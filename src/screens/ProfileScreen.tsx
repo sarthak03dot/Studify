@@ -174,7 +174,7 @@ export default function ProfileScreen({ navigation }: any) {
                         style={{ padding: 4, backgroundColor: isDark ? '#333' : '#eee', borderRadius: 4 }}
                         onPress={() => navigation.navigate('UploadResource', { resource: item })}
                     >
-                        <Text style={{ fontSize: 12, color: isDark ? '#fff' : '#333' }}>✏️ Edit</Text>
+                        <Text style={{ fontSize: 18,margin:4, color: isDark ? '#fff' : '#333' }}>Edit</Text>
                     </TouchableOpacity>
                 </View>
             </View>

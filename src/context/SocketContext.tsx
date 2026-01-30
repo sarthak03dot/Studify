@@ -13,7 +13,15 @@ const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 // Replace with your actual backend URL
 // For Android Emulator use 10.0.2.2, for iOS uses localhost
-const SOCKET_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000';
+// const SOCKET_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000';
+const isDev = __DEV__; // React Native ka built-in flag
+
+const SOCKET_URL = isDev
+  ? (Platform.OS === "android"
+      ? "http://10.0.2.2:5000"
+      : "http://localhost:5000")
+  : "https://your-deployed-backend.com";
+
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [socket, setSocket] = useState<Socket | null>(null);

@@ -42,7 +42,7 @@ export default function CurvedBottomBar({ state, descriptors, navigation }: Bott
                 <Svg width={width} height={TAB_BAR_HEIGHT + insets.bottom} style={styles.svg}>
                     <Path
                         d={d}
-                        fill="#4f46e5" // Red  cccdc color from reference
+                        fill="#4f46e5"
                     />
                 </Svg>
             </View>

@@ -2,7 +2,9 @@ import axios, { AxiosError, AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // const API_URL = "http://localhost:5000/api";
-const API_URL = "http://10.0.2.2:5000/api";
+// const API_URL = "http://10.0.2.2:5000/api";
+const API_URL = "https://studify-backend-15ig.onrender.com/api/";
+
 
 const apiClient: AxiosInstance = axios.create({
     baseURL: API_URL,
