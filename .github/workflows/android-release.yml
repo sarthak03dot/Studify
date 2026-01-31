@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Force Gradle 8.4
+        run: sed -i 's/gradle-9.0.0/gradle-8.4/g' android/gradle/wrapper/gradle-wrapper.properties
+
       - name: Decode keystore
         run: echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/my-release-key.keystore
 
@@ -34,9 +37,7 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          export CLI_LOG_LEVEL=debug
-          ./gradlew assembleRelease --stacktrace --info
-
+          ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
