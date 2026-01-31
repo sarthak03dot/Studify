@@ -1,98 +1,133 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# StudyFy 🎓
 
-# Getting Started
+StudyFy is a comprehensive **React Native** mobile application designed to be the ultimate companion for students and developers. It bridges the gap between academic resource sharing and professional portfolio tracking, providing a unified platform for learning and growth.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 🚀 Key Features
 
-## Step 1: Start Metro
+### 📊 Ecosystem Stats (Developer Portfolio)
+Connect and track your real-time progress across major developer platforms directly within the app:
+*   **GitHub**: View public repos, followers, following, and account age.
+*   **LeetCode**: Track solved problems (Easy/Med/Hard), global ranking, and acceptance rate.
+*   **Codeforces**: Monitor competitive programming ratings, max ratings, and ranks.
+*   **Visual Data**: Beautifully animated cards with platform-specific branding and metrics.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### 📚 Resource Hub
+A robust file-sharing system for academic materials:
+*   **Browse & Search**: Find resources by **Year**, **Branch**, or **Subject**. Capability to search by title or subject.
+*   **Smart Filtering**: Filter resources (Notes, Syllabus, Papers) relative to your academic standing.
+*   **Upload**: Contribute to the community by uploading resources.
+*   **Interactive UI**: Animations on interaction, category badges, and user attribution.
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### 🔐 Authentication & Profile
+*   **Secure Auth**: robust Login and Registration flows using **JWT** and modern validation.
+*   **Profile Management**: extensive profile customization with avatar management.
+*   **Real-time Updates**: Socket.io integration ensures data consistency.
 
-```sh
-# Using npm
-npm start
+### 🎨 Modern UI/UX
+*   **Theming**: Full support for **Dark Mode** and **Light Mode**.
+*   **Animations**: Smooth transitions and entry animations using `react-native-reanimated`.
+*   **Custom Navigation**: A unique **Curved Bottom Bar** for seamless navigation.
+*   **Design**: Uses Linear Gradients and Lucide Icons for a premium aesthetic.
 
-# OR using Yarn
-yarn start
-```
+---
 
-## Step 2: Build and run your app
+## 🛠 Tech Stack
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+### Frontend
+- **React Native** (v0.83)
+- **TypeScript**
+- **React 19**
 
-### Android
+### State & Data Management
+- **TanStack Query (React Query)**: For efficient server state management and caching.
+- **Context API**: For global app state (Auth, Theme).
 
-```sh
-# Using npm
-npm run android
+### Navigation
+- **React Navigation v7**:
+  - Native Stack Navigator
+  - Bottom Tab Navigator
 
-# OR using Yarn
-yarn android
-```
+### UI & Styling
+- **Reanimated**: For high-performance animations.
+- **Lucide React Native**: For consistent iconography.
+- **Linear Gradient**: For rich visual backgrounds.
+- **React Native SVG**: For custom vector graphics.
 
-### iOS
+### Form Handling & Validation
+- **React Hook Form**: Performant form management.
+- **Zod**: Schema-based validation.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+### Networking
+- **Axios**: HTTP client.
+- **Socket.io-client**: Real-time bidirectional communication.
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+---
 
-```sh
-bundle install
-```
+## 📱 Screens
 
-Then, and every time you update your native dependencies, run:
+The application allows users to navigate through several key screens:
+- **Dashboard**: The central hub for quick access to app features.
+- **Global Stats**: Your developer fitness tracker.
+- **Resources**: Browse and search specifically tailored study materials.
+- **Upload Resource**: Share knowledge with the community.
+- **Profile**: Manage your identity and settings.
 
-```sh
-bundle exec pod install
-```
+---
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## ⚡ Getting Started
 
-```sh
-# Using npm
-npm run ios
+### Prerequisites
+- Node.js (>=20) - [Download](https://nodejs.org/)
+- React Native CLI environment setup - [Guide](https://reactnative.dev/docs/environment-setup)
+- Android Studio / Xcode
 
-# OR using Yarn
-yarn ios
-```
+### Installation
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/studyfy.git
+   cd studyfy
+   ```
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+2. **Install dependencies**
+   ```bash
+   # Using npm
+   npm install
+   
+   # OR using Yarn
+   yarn install
+   ```
 
-## Step 3: Modify your app
+3. **Install Pods (iOS only)**
+   ```bash
+   cd ios && pod install && cd ..
+   ```
 
-Now that you have successfully run the app, let's make changes!
+### Running the App
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+1. **Start Metro Bundler**
+   ```bash
+   npm start
+   ```
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+2. **Run on Android**
+   ```bash
+   npm run android
+   ```
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+3. **Run on iOS**
+   ```bash
+   npm run ios
+   ```
 
-## Congratulations! :tada:
+---
 
-You've successfully run and modified your React Native App. :partying_face:
+## 🤝 Contributing
 
-### Now what?
+Contributions are welcome! Please fork the repository and submit a pull request for any enhancements or bug fixes.
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+---
 
-# Troubleshooting
+## 📄 License
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
-
+This project is licensed under the MIT License.
