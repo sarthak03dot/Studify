@@ -9,8 +9,12 @@ import {
     ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
-    Animated
+    Animated,
+    Image
 } from "react-native";
+import LinearGradient from 'react-native-linear-gradient';
+import { Input } from "../components/ui/Input";
+import { Button } from "../components/ui/Button";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { uploadResource, updateResource } from "../services/resource.service";
@@ -137,169 +141,194 @@ export default function UploadResourceScreen() {
     };
 
     return (
-        <KeyboardAvoidingView
-            style={[styles.container, { backgroundColor: isDark ? '#121212' : '#F3F4F6' }]}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-            <Navbar title={isEditing ? "Edit Resource" : "Upload Resource"} />
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+        <View style={{ flex: 1 }}>
+            <LinearGradient
+                colors={theme === 'dark' ? ['#7f1d1d', '#1e1e1e'] : ['#f59e0b', '#ef4444']}
+                style={StyleSheet.absoluteFill}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+            />
+            <KeyboardAvoidingView
+                style={[styles.container]}
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
+            >
+                <Navbar title={isEditing ? "Edit Resource" : "Upload Resource"} />
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
 
-                    <View style={[styles.card, { backgroundColor: isDark ? '#1E1E1E' : '#FFF' }]}>
-                        <Text style={styles.label}>Title</Text>
-                        <Controller
-                            control={control}
-                            name="title"
-                            render={({ field: { onChange, onBlur, value } }) => (
-                                <TextInput
-                                    style={[styles.input, { color: isDark ? '#FFF' : '#333', borderColor: isDark ? '#333' : '#E5E7EB' }]}
-                                    placeholder="e.g. Data Structures Unit 1"
-                                    placeholderTextColor={isDark ? '#666' : '#9CA3AF'}
-                                    onBlur={onBlur}
-                                    onChangeText={onChange}
-                                    value={value}
-                                />
-                            )}
-                        />
-                        {errors.title && <Text style={styles.errorText}>{errors.title.message}</Text>}
+                        <View style={[styles.glassCard, { borderColor: 'rgba(255,255,255,0.2)' }]}>
+                            <Controller
+                                control={control}
+                                name="title"
+                                render={({ field: { onChange, onBlur, value } }) => (
+                                    <Input
+                                        label="Title"
+                                        placeholder="e.g. Data Structures Unit 1"
+                                        value={value}
+                                        onChangeText={onChange}
+                                        onBlur={onBlur}
+                                        error={errors.title?.message}
+                                        glass
+                                    />
+                                )}
+                            />
 
-                        <Text style={styles.label}>Description</Text>
-                        <Controller
-                            control={control}
-                            name="description"
-                            render={({ field: { onChange, onBlur, value } }) => (
-                                <TextInput
-                                    style={[styles.input, styles.textArea, { color: isDark ? '#FFF' : '#333', borderColor: isDark ? '#333' : '#E5E7EB' }]}
-                                    placeholder="Brief description of the content..."
-                                    placeholderTextColor={isDark ? '#666' : '#9CA3AF'}
-                                    onBlur={onBlur}
-                                    onChangeText={onChange}
-                                    value={value}
-                                    multiline
-                                    numberOfLines={4}
-                                />
-                            )}
-                        />
-                        {errors.description && <Text style={styles.errorText}>{errors.description.message}</Text>}
+                            <Controller
+                                control={control}
+                                name="description"
+                                render={({ field: { onChange, onBlur, value } }) => (
+                                    <Input
+                                        label="Description"
+                                        placeholder="Brief description of the content..."
+                                        value={value}
+                                        onChangeText={onChange}
+                                        onBlur={onBlur}
+                                        error={errors.description?.message}
+                                        multiline
+                                        numberOfLines={3}
+                                        glass
+                                        style={{ height: 80, textAlignVertical: 'top' }}
+                                    />
+                                )}
+                            />
 
-                        <Text style={styles.label}>Resource Type</Text>
-                        <View style={styles.typeContainer}>
-                            {typeOptions.map((option) => (
+                            <Text style={[styles.label, { color: theme === 'dark' ? '#cbd5e1' : '#4b5563' }]}>Resource Type</Text>
+                            <View style={styles.typeContainer}>
+                                {typeOptions.map((option) => (
+                                    <TouchableOpacity
+                                        key={option.value}
+                                        style={[
+                                            styles.typeButton,
+                                            selectedType === option.value && styles.typeButtonActive,
+                                            {
+                                                backgroundColor: selectedType === option.value
+                                                    ? (theme === 'dark' ? '#ef4444' : '#f59e0b')
+                                                    : 'rgba(255,255,255,0.2)',
+                                                borderColor: selectedType === option.value
+                                                    ? 'transparent'
+                                                    : 'rgba(255,255,255,0.3)'
+                                            }
+                                        ]}
+                                        onPress={() => setValue('type', option.value as any)}
+                                    >
+                                        <Text style={styles.typeIcon}>{option.icon}</Text>
+                                        <Text style={[
+                                            styles.typeText,
+                                            selectedType === option.value ? { color: '#fff' } : { color: theme === 'dark' ? '#cbd5e1' : '#4b5563' }
+                                        ]}>{option.label}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+
+                            <Text style={[styles.label, { color: theme === 'dark' ? '#cbd5e1' : '#4b5563' }]}>Year</Text>
+                            <View style={styles.yearContainer}>
+                                {yearOptions.map((year) => (
+                                    <TouchableOpacity
+                                        key={year}
+                                        style={[
+                                            styles.yearButton,
+                                            {
+                                                backgroundColor: selectedYear === year
+                                                    ? (theme === 'dark' ? '#ef4444' : '#f59e0b')
+                                                    : 'rgba(255,255,255,0.2)',
+                                                borderColor: selectedYear === year
+                                                    ? 'transparent'
+                                                    : 'rgba(255,255,255,0.3)'
+                                            }
+                                        ]}
+                                        onPress={() => setValue('year', year)}
+                                    >
+                                        <Text style={[
+                                            styles.yearText,
+                                            { color: selectedYear === year ? '#fff' : (theme === 'dark' ? '#cbd5e1' : '#4b5563') }
+                                        ]}>{year} Year</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+
+                            <Controller
+                                control={control}
+                                name="branch"
+                                render={({ field: { onChange, onBlur, value } }) => (
+                                    <Input
+                                        label="Branch"
+                                        placeholder="e.g. CSE, ECE"
+                                        value={value}
+                                        onChangeText={onChange}
+                                        onBlur={onBlur}
+                                        error={errors.branch?.message}
+                                        glass
+                                    />
+                                )}
+                            />
+
+                            <Controller
+                                control={control}
+                                name="subject"
+                                render={({ field: { onChange, onBlur, value } }) => (
+                                    <Input
+                                        label="Subject"
+                                        placeholder="e.g. Mathematics II"
+                                        value={value}
+                                        onChangeText={onChange}
+                                        onBlur={onBlur}
+                                        error={errors.subject?.message}
+                                        glass
+                                    />
+                                )}
+                            />
+
+                            <Controller
+                                control={control}
+                                name="fileUrl"
+                                render={({ field: { onChange, onBlur, value } }) => (
+                                    <Input
+                                        label="File URL (Drive/Link)"
+                                        placeholder="https://..."
+                                        value={value}
+                                        onChangeText={onChange}
+                                        onBlur={onBlur}
+                                        error={errors.fileUrl?.message}
+                                        autoCapitalize="none"
+                                        glass
+                                    />
+                                )}
+                            />
+
+                            <View style={styles.buttonContainer}>
                                 <TouchableOpacity
-                                    key={option.value}
-                                    style={[
-                                        styles.typeButton,
-                                        selectedType === option.value && styles.typeButtonActive,
-                                        { borderColor: isDark ? '#333' : '#E5E7EB' }
-                                    ]}
-                                    onPress={() => setValue('type', option.value as any)}
+                                    style={[styles.submitButton, loading && styles.buttonDisabled]}
+                                    onPress={handleSubmit(onSubmit)}
+                                    disabled={loading}
                                 >
-                                    <Text style={styles.typeIcon}>{option.icon}</Text>
-                                    <Text style={[
-                                        styles.typeText,
-                                        selectedType === option.value && styles.typeTextActive,
-                                        { color: selectedType === option.value ? '#FFF' : (isDark ? '#AAA' : '#4B5563') }
-                                    ]}>{option.label}</Text>
+                                    <LinearGradient
+                                        colors={['#f59e0b', '#ef4444']}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 0 }}
+                                        style={styles.gradientButton}
+                                    >
+                                        {loading ? (
+                                            <ActivityIndicator color="#FFF" />
+                                        ) : (
+                                            <Text style={styles.submitButtonText}>{isEditing ? "Update Resource" : "Upload Resource"}</Text>
+                                        )}
+                                    </LinearGradient>
                                 </TouchableOpacity>
-                            ))}
-                        </View>
 
-                        <Text style={styles.label}>Year</Text>
-                        <View style={styles.yearContainer}>
-                            {yearOptions.map((year) => (
                                 <TouchableOpacity
-                                    key={year}
-                                    style={[
-                                        styles.yearButton,
-                                        selectedYear === year && styles.yearButtonActive,
-                                        { borderColor: isDark ? '#333' : '#E5E7EB', backgroundColor: selectedYear === year ? '#6C63FF' : 'transparent' }
-                                    ]}
-                                    onPress={() => setValue('year', year)}
+                                    style={styles.cancelButton}
+                                    onPress={() => navigation.goBack()}
                                 >
-                                    <Text style={[
-                                        styles.yearText,
-                                        selectedYear === year && { color: '#FFF' },
-                                        { color: selectedYear === year ? '#FFF' : (isDark ? '#AAA' : '#4B5563') }
-                                    ]}>{year} Year</Text>
+                                    <Text style={[styles.cancelButtonText, { color: theme === 'dark' ? '#cbd5e1' : '#4b5563' }]}>Cancel</Text>
                                 </TouchableOpacity>
-                            ))}
+                            </View>
                         </View>
-
-                        <Text style={styles.label}>Branch</Text>
-                        <Controller
-                            control={control}
-                            name="branch"
-                            render={({ field: { onChange, onBlur, value } }) => (
-                                <TextInput
-                                    style={[styles.input, { color: isDark ? '#FFF' : '#333', borderColor: isDark ? '#333' : '#E5E7EB' }]}
-                                    placeholder="e.g. CSE, ECE, ME"
-                                    placeholderTextColor={isDark ? '#666' : '#9CA3AF'}
-                                    onBlur={onBlur}
-                                    onChangeText={onChange}
-                                    value={value}
-                                />
-                            )}
-                        />
-                        {errors.branch && <Text style={styles.errorText}>{errors.branch.message}</Text>}
-
-                        <Text style={styles.label}>Subject</Text>
-                        <Controller
-                            control={control}
-                            name="subject"
-                            render={({ field: { onChange, onBlur, value } }) => (
-                                <TextInput
-                                    style={[styles.input, { color: isDark ? '#FFF' : '#333', borderColor: isDark ? '#333' : '#E5E7EB' }]}
-                                    placeholder="e.g. Mathematics II"
-                                    placeholderTextColor={isDark ? '#666' : '#9CA3AF'}
-                                    onBlur={onBlur}
-                                    onChangeText={onChange}
-                                    value={value}
-                                />
-                            )}
-                        />
-                        {errors.subject && <Text style={styles.errorText}>{errors.subject.message}</Text>}
-
-                        <Text style={styles.label}>File URL (Drive/Link)</Text>
-                        <Controller
-                            control={control}
-                            name="fileUrl"
-                            render={({ field: { onChange, onBlur, value } }) => (
-                                <TextInput
-                                    style={[styles.input, { color: isDark ? '#FFF' : '#333', borderColor: isDark ? '#333' : '#E5E7EB' }]}
-                                    placeholder="https://..."
-                                    placeholderTextColor={isDark ? '#666' : '#9CA3AF'}
-                                    onBlur={onBlur}
-                                    onChangeText={onChange}
-                                    value={value}
-                                    autoCapitalize="none"
-                                />
-                            )}
-                        />
-                        {errors.fileUrl && <Text style={styles.errorText}>{errors.fileUrl.message}</Text>}
-
-                        <TouchableOpacity
-                            style={[styles.submitButton, loading && styles.buttonDisabled]}
-                            onPress={handleSubmit(onSubmit)}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <ActivityIndicator color="#FFF" />
-                            ) : (
-                                <Text style={styles.submitButtonText}>{isEditing ? "Update Resource" : "Upload Resource"}</Text>
-                            )}
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.cancelButton}
-                            onPress={() => navigation.goBack()}
-                        >
-                            <Text style={[styles.cancelButtonText, { color: isDark ? '#AAA' : '#6B7280' }]}>Cancel</Text>
-                        </TouchableOpacity>
-                    </View>
-                </Animated.View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                    </Animated.View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </View>
     );
+
 }
 
 const styles = StyleSheet.create({
@@ -310,49 +339,25 @@ const styles = StyleSheet.create({
         padding: 24,
         paddingBottom: 40,
     },
-    header: {
-        marginBottom: 24,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: '800',
-        marginBottom: 4,
-    },
-    subtitle: {
-        fontSize: 16,
-    },
-    card: {
-        borderRadius: 20,
-        padding: 20,
+    glassCard: {
+        borderRadius: 24,
+        padding: 24,
+        width: '100%',
+        backgroundColor: 'rgba(255,255,255,0.85)',
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
+        shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 3,
+        shadowRadius: 20,
+        elevation: 10,
+        borderWidth: 1,
     },
     label: {
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: '600',
-        color: '#6B7280',
         marginBottom: 8,
         marginTop: 16,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
-    },
-    input: {
-        borderWidth: 1,
-        borderRadius: 12,
-        padding: 14,
-        fontSize: 16,
-    },
-    textArea: {
-        height: 100,
-        textAlignVertical: 'top',
-    },
-    errorText: {
-        color: '#EF4444',
-        fontSize: 12,
-        marginTop: 4,
     },
     typeContainer: {
         flexDirection: 'row',
@@ -361,25 +366,21 @@ const styles = StyleSheet.create({
     typeButton: {
         flex: 1,
         borderWidth: 1,
-        borderRadius: 12,
+        borderRadius: 16,
         padding: 12,
         alignItems: 'center',
         justifyContent: 'center',
     },
     typeButtonActive: {
-        backgroundColor: '#6C63FF',
-        borderColor: '#6C63FF',
+        transform: [{ scale: 1.05 }],
     },
     typeIcon: {
-        fontSize: 20,
+        fontSize: 24,
         marginBottom: 4,
     },
     typeText: {
         fontWeight: '600',
         fontSize: 12,
-    },
-    typeTextActive: {
-        color: '#FFF',
     },
     yearContainer: {
         flexDirection: 'row',
@@ -387,31 +388,34 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     yearButton: {
-        flex: 1, // Distribute space evenly
-        minWidth: '20%', // Ensure buttons don't get too small
+        flex: 1,
+        minWidth: '20%',
         borderWidth: 1,
         borderRadius: 12,
         padding: 12,
         alignItems: 'center',
     },
-    yearButtonActive: {
-        backgroundColor: '#6C63FF',
-        borderColor: '#6C63FF',
-    },
     yearText: {
         fontWeight: '600',
+        fontSize: 13,
+    },
+    buttonContainer: {
+        marginTop: 32,
+        gap: 12,
     },
     submitButton: {
-        backgroundColor: '#6C63FF',
-        marginTop: 32,
-        padding: 16,
-        borderRadius: 12,
-        alignItems: 'center',
-        shadowColor: "#6C63FF",
+        borderRadius: 16,
+        overflow: 'hidden',
+        elevation: 4,
+        shadowColor: "#f59e0b",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
-        elevation: 5,
+    },
+    gradientButton: {
+        padding: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     buttonDisabled: {
         opacity: 0.7,
@@ -419,12 +423,14 @@ const styles = StyleSheet.create({
     submitButtonText: {
         color: '#FFF',
         fontSize: 16,
-        fontWeight: '800',
+        fontWeight: 'bold',
+        letterSpacing: 0.5,
     },
     cancelButton: {
         padding: 16,
         alignItems: 'center',
-        marginTop: 8,
+        borderRadius: 16,
+        backgroundColor: 'rgba(0,0,0,0.05)',
     },
     cancelButtonText: {
         fontWeight: '600',

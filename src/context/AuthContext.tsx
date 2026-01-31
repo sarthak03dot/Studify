@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from 'axios';
+// import axios from 'axios';
 import { AppState, AppStateStatus } from "react-native";
 import { User, AuthResponse } from "../types/auth";
 import apiClient from "../utils/api";
@@ -11,13 +11,13 @@ interface AuthContextType {
     login: (email: string, password: string) => Promise<void>;
     register: (name: string, email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
+    updateUser: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-// const API_URL = "http://localhost:5000/api/auth";
-// const API_URL = "http://10.0.2.2:5000/api/auth";
-const API_URL = "https://studify-backend-15ig.onrender.com/api/auth";
+// using apiClient for requests
+// const API_URL = "https://studify-backend-15ig.onrender.com/api/auth";
 
 const INACTIVITY_LIMIT_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -73,10 +73,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 // Trusting token for speed, but ideally we check validity
                 // Let's try to fetch profile to validate
                 apiClient.defaults.headers.common.Authorization = `Bearer ${token}`; // Ensure header is set if using shared instance
-                const res = await axios.get(`${API_URL}/profile`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setUser(res.data);
+                const res = await apiClient.get('/auth/profile');
+                setUser(res as any);
             }
         } catch (error) {
             console.log("Token invalid or expired", error);
@@ -87,26 +85,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }, []);
 
     const login = useCallback(async (email: string, password: string) => {
-        const res = await axios.post<AuthResponse>(`${API_URL}/login`, {
+        const res = await apiClient.post<AuthResponse>('/auth/login', {
             email,
             password,
         });
 
-        await AsyncStorage.setItem("token", res.data.token);
+        const data = res as any;
+        await AsyncStorage.setItem("token", data.token);
         await AsyncStorage.setItem("last_active_timestamp", Date.now().toString());
-        setUser(res.data.user);
+        setUser(data.user);
     }, []);
 
     const register = useCallback(async (name: string, email: string, password: string) => {
-        const res = await axios.post<AuthResponse>(`${API_URL}/register`, {
+        const res = await apiClient.post<AuthResponse>('/auth/register', {
             name,
             email,
             password,
         });
 
-        await AsyncStorage.setItem("token", res.data.token);
+        const data = res as any;
+        await AsyncStorage.setItem("token", data.token);
         await AsyncStorage.setItem("last_active_timestamp", Date.now().toString());
-        setUser(res.data.user);
+        setUser(data.user);
+    }, []);
+
+    const updateUser = useCallback((userData: User) => {
+        setUser(userData);
     }, []);
 
     useEffect(() => {
@@ -120,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }, [checkLoginStatus, handleAppStateChange]);
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

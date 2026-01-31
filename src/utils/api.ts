@@ -1,9 +1,12 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// const API_URL = "http://localhost:5000/api";
-// const API_URL = "http://10.0.2.2:5000/api";
-const API_URL = "https://studify-backend-15ig.onrender.com/api/";
+import { API_URL } from '@env';
+
+// const API_URL_LOCAL = "http://localhost:5000/api";
+// const API_URL_EMULATOR = "http://10.0.2.2:5000/api";
+// Using env variable now
+
 
 
 const apiClient: AxiosInstance = axios.create({
@@ -12,6 +15,8 @@ const apiClient: AxiosInstance = axios.create({
         'Content-Type': 'application/json',
     },
 });
+
+console.log("Using API_URL:", API_URL);
 
 // Request interceptor to add token to headers
 apiClient.interceptors.request.use(
@@ -29,7 +34,10 @@ apiClient.interceptors.request.use(
 
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // Unwrap data if it exists in our standard format
+        return response.data?.status === 'success' ? response.data.data : response.data;
+    },
     (error: AxiosError) => {
         if (error.response) {
             // Server responded with error

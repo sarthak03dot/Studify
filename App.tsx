@@ -6,6 +6,16 @@ import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { SocketProvider } from './src/context/SocketContext';
 import { ThemeSync } from './src/components/ThemeSync';
 import { AlertProvider } from './src/context/AlertContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
 
 const AppContent = () => {
   const { theme } = useTheme();
@@ -21,13 +31,15 @@ const AppContent = () => {
 function App(): React.JSX.Element {
   return (
     <ThemeProvider>
-      <AlertProvider>
-        <AuthProvider>
-          <SocketProvider>
-            <AppContent />
-          </SocketProvider>
-        </AuthProvider>
-      </AlertProvider>
+      <QueryClientProvider client={queryClient}>
+        <AlertProvider>
+          <AuthProvider>
+            <SocketProvider>
+              <AppContent />
+            </SocketProvider>
+          </AuthProvider>
+        </AlertProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }

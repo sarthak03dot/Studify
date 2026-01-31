@@ -2,15 +2,18 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Linking, Animated, TextInput, Modal } from 'react-native';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
+import LinearGradient from 'react-native-linear-gradient';
 import { getResources } from '../services/resource.service';
 import { Resource } from '../types/resource';
 import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
+import { useSocket } from '../context/SocketContext';
 
 const ResourceListScreen = () => {
     const route = useRoute();
     const navigation = useNavigation();
     const { theme } = useTheme();
+    const { lastResource } = useSocket();
     // Default to 'all' if no params provided (e.g. from tab bar)
     const { type = 'all', branch, subject, year } = (route.params || {}) as { type?: string, branch?: string, subject?: string, year?: number };
 
@@ -38,6 +41,12 @@ const ResourceListScreen = () => {
             }).start();
         }, [])
     );
+
+    useEffect(() => {
+        if (lastResource) {
+            fetchResources();
+        }
+    }, [lastResource]);
 
     const fetchResources = async () => {
         try {
@@ -126,38 +135,50 @@ const ResourceListScreen = () => {
                 }}
             >
                 <TouchableOpacity
-                    style={[styles.card, { backgroundColor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF', shadowColor: theme === 'dark' ? '#000' : '#ccc' }]}
+                    style={[
+                        styles.card,
+                        {
+                            backgroundColor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
+                            borderColor: theme === 'dark' ? '#333' : 'rgba(0,0,0,0.05)',
+                        }
+                    ]}
                     onPress={() => openResource(item.fileUrl)}
-                    activeOpacity={1}
+                    activeOpacity={0.9}
                     onPressIn={onPressIn}
                     onPressOut={onPressOut}
                 >
                     <View style={styles.cardHeader}>
                         <View style={{ flex: 1 }}>
-                            <Text style={[styles.title, { color: theme === 'dark' ? '#FFF' : '#333' }]}>{item.title}</Text>
-                            <Text style={[styles.subject, { color: theme === 'dark' ? '#AAA' : '#666' }]}>
+                            <Text style={[styles.title, { color: theme === 'dark' ? '#FFF' : '#1f2937' }]}>{item.title}</Text>
+                            <Text style={[styles.subject, { color: theme === 'dark' ? '#AAA' : '#6b7280' }]}>
                                 {item.subject} • {item.year === 1 ? '1st' : item.year === 2 ? '2nd' : item.year === 3 ? '3rd' : '4th'} Year
                             </Text>
                         </View>
-                        <View style={[styles.typeBadge, { backgroundColor: '#E0E7FF' }]}>
-                            <Text style={[styles.typeText, { color: '#4F46E5' }]}>{item.type.toUpperCase()}</Text>
+                        <View style={[styles.typeBadge, {
+                            backgroundColor: item.type === 'note' ? '#dbeafe' : item.type === 'syllabus' ? '#fce7f3' : '#ffedd5'
+                        }]}>
+                            <Text style={[styles.typeText, {
+                                color: item.type === 'note' ? '#1d4ed8' : item.type === 'syllabus' ? '#be185d' : '#c2410c'
+                            }]}>{item.type.toUpperCase()}</Text>
                         </View>
                     </View>
 
-                    <Text style={[styles.description, { color: theme === 'dark' ? '#BBB' : '#555' }]} numberOfLines={2}>
+                    <Text style={[styles.description, { color: theme === 'dark' ? '#BBB' : '#4b5563' }]} numberOfLines={2}>
                         {item.description}
                     </Text>
 
-                    <View style={styles.footer}>
+                    <View style={[styles.footer, { borderTopColor: theme === 'dark' ? '#333' : '#f3f4f6' }]}>
                         <View style={styles.userInfo}>
-                            <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>{item.uploadedBy?.name?.charAt(0).toUpperCase() || 'U'}</Text>
+                            <View style={[styles.avatar, { backgroundColor: theme === 'dark' ? '#333' : '#e5e7eb' }]}>
+                                <Text style={[styles.avatarText, { color: theme === 'dark' ? '#fff' : '#374151' }]}>
+                                    {item.uploadedBy?.name?.charAt(0).toUpperCase() || 'U'}
+                                </Text>
                             </View>
-                            <Text style={[styles.author, { color: theme === 'dark' ? '#888' : '#666' }]}>
+                            <Text style={[styles.author, { color: theme === 'dark' ? '#888' : '#6b7280' }]}>
                                 {item.uploadedBy?.name || 'Unknown'}
                             </Text>
                         </View>
-                        <Text style={[styles.date, { color: theme === 'dark' ? '#888' : '#999' }]}>
+                        <Text style={[styles.date, { color: theme === 'dark' ? '#666' : '#9ca3af' }]}>
                             {new Date(item.createdAt).toLocaleDateString()}
                         </Text>
                     </View>
@@ -168,26 +189,31 @@ const ResourceListScreen = () => {
 
     return (
         <View style={[styles.container, { backgroundColor: theme === 'dark' ? '#121212' : '#F3F4F6' }]}>
-            <Navbar title="Resources" />
+            <LinearGradient
+                colors={theme === 'dark' ? ['#7f1d1d', '#1e1e1e'] : ['#f59e0b', '#ef4444']}
+                style={styles.headerGradient}
+            >
+                <Navbar title="Resources" />
 
-            <View style={[styles.searchContainer, { backgroundColor: theme === 'dark' ? '#121212' : '#F3F4F6' }]}>
-                <View style={[styles.searchBar, { backgroundColor: theme === 'dark' ? '#1E1E1E' : '#FFF' }]}>
-                    <Text style={styles.searchIcon}>🔍</Text>
-                    <TextInput
-                        style={[styles.searchInput, { color: theme === 'dark' ? '#FFF' : '#333' }]}
-                        placeholder="Search resources..."
-                        placeholderTextColor={theme === 'dark' ? '#666' : '#999'}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                    />
+                <View style={styles.searchContainer}>
+                    <View style={[styles.searchBar, { backgroundColor: theme === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.2)' }]}>
+                        <Text style={[styles.searchIcon, { color: '#fff' }]}>🔍</Text>
+                        <TextInput
+                            style={[styles.searchInput, { color: '#fff' }]}
+                            placeholder="Search resources..."
+                            placeholderTextColor="rgba(255,255,255,0.7)"
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                        />
+                    </View>
+                    <TouchableOpacity
+                        style={[styles.filterButton, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+                        onPress={() => setFilterModalVisible(true)}
+                    >
+                        <Text style={styles.filterIcon}>🌪️</Text>
+                    </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                    style={[styles.filterButton, { backgroundColor: theme === 'dark' ? '#1E1E1E' : '#FFF' }]}
-                    onPress={() => setFilterModalVisible(true)}
-                >
-                    <Text style={styles.filterIcon}>🌪️</Text>
-                </TouchableOpacity>
-            </View>
+            </LinearGradient>
 
             {loading ? (
                 <View style={styles.loader}>
@@ -278,49 +304,52 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
+    headerGradient: {
+        paddingBottom: 20,
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
+        elevation: 8,
+        shadowColor: '#f59e0b',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+    },
     searchContainer: {
         flexDirection: 'row',
-        paddingHorizontal: 16,
-        paddingBottom: 8,
-        paddingTop: 8,
+        paddingHorizontal: 20,
+        gap: 12,
         alignItems: 'center',
     },
     searchBar: {
         flex: 1,
-        height: 48,
-        borderRadius: 12,
+        height: 50,
+        borderRadius: 16,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 12,
-        marginRight: 10,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 2,
+        paddingHorizontal: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.3)',
     },
     searchIcon: {
         fontSize: 18,
-        marginRight: 8,
+        marginRight: 12,
     },
     searchInput: {
         flex: 1,
         fontSize: 16,
+        height: '100%',
     },
     filterButton: {
-        width: 48,
-        height: 48,
-        borderRadius: 12,
+        width: 50,
+        height: 50,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 2,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.3)',
     },
     filterIcon: {
-        fontSize: 22,
+        fontSize: 24,
     },
     loader: {
         flex: 1,
@@ -328,20 +357,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     listContent: {
-        padding: 16,
-        paddingTop: 8,
+        padding: 20,
+        paddingTop: 20,
         paddingBottom: 100,
     },
     card: {
-        borderRadius: 16,
+        borderRadius: 20,
         padding: 20,
         marginBottom: 16,
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
         elevation: 3,
         borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
     },
     cardHeader: {
         flexDirection: 'row',
@@ -351,60 +380,59 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 18,
-        fontWeight: 'bold',
+        fontWeight: '700',
         marginBottom: 4,
+        lineHeight: 24,
     },
     subject: {
-        fontSize: 14,
-        fontWeight: '500',
+        fontSize: 13,
+        fontWeight: '600',
     },
     typeBadge: {
-        paddingHorizontal: 8,
+        paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 8,
         marginLeft: 12,
     },
     typeText: {
-        fontSize: 10,
-        fontWeight: '800',
+        fontSize: 11,
+        fontWeight: '700',
     },
     description: {
         fontSize: 14,
         marginBottom: 16,
-        lineHeight: 20,
+        lineHeight: 22,
     },
     footer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingTop: 12,
+        paddingTop: 16,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(0,0,0,0.05)',
     },
     userInfo: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     avatar: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: '#6C63FF',
+        width: 28,
+        height: 28,
+        borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 8,
+        marginRight: 10,
     },
     avatarText: {
-        color: '#FFF',
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 'bold',
     },
     author: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: '500',
     },
     date: {
         fontSize: 12,
+        fontWeight: '500',
     },
     emptyContainer: {
         alignItems: 'center',

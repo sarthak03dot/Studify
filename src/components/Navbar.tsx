@@ -11,15 +11,20 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../context/ThemeContext";
+import { theme as AppTheme } from "../theme/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ArrowLeft } from "lucide-react-native";
 
 interface NavbarProps {
     title?: string;
+    transparent?: boolean;
+    showBack?: boolean;
 }
 
-export default function Navbar({ title = "Studify" }: NavbarProps) {
+export default function Navbar({ title = "Studify", transparent = false, showBack = false }: NavbarProps) {
     const { user, logout } = useAuth();
     const { theme } = useTheme();
+    const currentTheme = AppTheme[theme as 'light' | 'dark']; // Access full theme object
     const isDark = theme === "dark";
     const navigation = useNavigation();
     const [open, setOpen] = useState(false);
@@ -33,13 +38,20 @@ export default function Navbar({ title = "Studify" }: NavbarProps) {
     };
 
     const containerStyle = {
-        backgroundColor: isDark ? '#1e1e1e' : '#fff',
+        backgroundColor: transparent ? 'transparent' : (currentTheme?.colors?.overlay || (isDark ? '#1e1e1e' : '#fff')),
         shadowColor: isDark ? '#000' : '#000',
         paddingTop: Math.max(insets.top, 20),
+        elevation: transparent ? 0 : 5,
+        shadowOpacity: transparent ? 0 : 0.05,
+        borderBottomWidth: transparent ? 0 : 0, // Just to be explicit
+        position: (transparent ? 'absolute' : 'relative') as any,
+        top: 0,
+        left: 0,
+        right: 0,
     };
 
     const textStyle = {
-        color: isDark ? '#fff' : '#1f2937',
+        color: transparent ? '#fff' : (isDark ? '#fff' : '#1f2937'),
     };
 
     const dropdownStyle = {
@@ -58,11 +70,21 @@ export default function Navbar({ title = "Studify" }: NavbarProps) {
         <View style={[styles.container, containerStyle]}>
             <View style={styles.content}>
                 <View style={styles.brandContainer}>
-                    <Image
-                        source={require('../assets/images/logo.png')}
-                        style={styles.logoImage}
-                        resizeMode="contain"
-                    />
+                    {showBack && (
+                        <TouchableOpacity
+                            onPress={() => navigation.goBack()}
+                            style={styles.backButton}
+                        >
+                            <ArrowLeft size={24} color={transparent ? '#fff' : (isDark ? '#fff' : '#1f2937')} />
+                        </TouchableOpacity>
+                    )}
+                    {!showBack && (
+                        <Image
+                            source={require('../assets/images/logo.png')}
+                            style={styles.logoImage}
+                            resizeMode="contain"
+                        />
+                    )}
                     <Text style={[styles.logo, textStyle]}>{title}</Text>
                 </View>
 
@@ -163,9 +185,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     logoImage: {
-        width: 64,
-        height: 64,
-        marginRight: 2,
+        width: 48,
+        height: 48,
+        marginRight: 8,
+    },
+    backButton: {
+        marginRight: 12,
+        padding: 4,
     },
     logoIcon: {
         fontSize: 24,

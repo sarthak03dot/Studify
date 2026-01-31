@@ -1,369 +1,293 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useState, useEffect, useCallback } from "react";
 import {
     View,
     Text,
-    TextInput,
-    TouchableOpacity,
     StyleSheet,
     ActivityIndicator,
     ScrollView,
-    FlatList,
+    TouchableOpacity,
     Linking,
-    Animated
+    Dimensions
 } from "react-native";
+import { useFocusEffect } from '@react-navigation/native';
+import LinearGradient from "react-native-linear-gradient";
+import Animated, {
+    FadeInDown,
+    FadeInRight,
+    useAnimatedStyle,
+    withSpring,
+    useSharedValue
+} from "react-native-reanimated";
+import {
+    Settings,
+    Flame,
+    CheckCircle2,
+    UploadCloud,
+    LogOut,
+    ChevronRight,
+    Moon,
+    Sun,
+    Lock,
+    Edit3,
+    BookOpen,
+    Info,
+    BarChart2
+} from "lucide-react-native";
+
 import Navbar from '../components/Navbar';
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useAlert } from "../context/AlertContext";
-import apiClient from "../utils/api";
-import { getResources } from "../services/resource.service";
-import { Resource } from "../types/resource";
+import { useSocket } from "../context/SocketContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { useProfile, useUpdateProfile } from "../hooks/useUser";
+import { useResources } from "../hooks/useResources";
+import { theme as appTheme } from "../theme/theme";
+import { Card } from "../components/ui/Card";
+import { StreakCalendar } from "../components/StreakCalendar";
+import { Input } from "../components/ui/Input";
+import { Button } from "../components/ui/Button";
+
+const { width } = Dimensions.get('window');
 
 export default function ProfileScreen({ navigation }: any) {
-    const { user, logout } = useAuth();
+    const { logout, updateUser } = useAuth();
     const { theme, setTheme } = useTheme();
     const { showAlert } = useAlert();
-    const [isEditing, setIsEditing] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [name, setName] = useState(user?.name || "");
+    const { lastUpdate } = useSocket();
+    const queryClient = useQueryClient();
+    const isDark = theme === "dark";
+    const colors = appTheme[isDark ? 'dark' : 'light'].colors;
 
-    // My Uploads State
-    const [myUploads, setMyUploads] = useState<Resource[]>([]);
-    const [loadingUploads, setLoadingUploads] = useState(false);
+    // TanStack Query Hooks
+    const { data: user, isLoading: loadingProfile, refetch: refetchProfile } = useProfile();
+    const { data: uploads, isLoading: loadingUploads, refetch: refetchUploads } = useResources({ uploadedBy: user?.id });
+    const updateProfileMutation = useUpdateProfile();
 
-    // Password change state
-    const [showPasswordForm, setShowPasswordForm] = useState(false);
-    const [currentPassword, setCurrentPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-
-    // Animation for uploads
-    const fadeAnim = useRef(new Animated.Value(0)).current;
-
-    const fetchMyUploads = useCallback(async () => {
-        if (!user) return;
-        try {
-            setLoadingUploads(true);
-            const data = await getResources({ uploadedBy: user.id });
-            setMyUploads(data);
-        } catch (error) {
-            console.error("Failed to fetch my uploads", error);
-        } finally {
-            setLoadingUploads(false);
-        }
-    }, [user]);
+    const streakCount = typeof user?.streak === 'object' ? user?.streak?.count : (user?.streak ?? 0);
 
     useFocusEffect(
         useCallback(() => {
-            if (user) {
-                // Only update name if it hasn't been edited locally to avoid overwriting typed input? 
-                // Actually name state is initialized from user, let's keep it simple.
-                // setName(user.name); 
-                fetchMyUploads();
-            }
-        }, [user, fetchMyUploads])
+            refetchProfile();
+            refetchUploads();
+        }, [refetchProfile, refetchUploads])
     );
 
     useEffect(() => {
-        if (!loadingUploads && myUploads.length > 0) {
-            Animated.timing(fadeAnim, {
-                toValue: 1,
-                duration: 600,
-                // @ts-ignore
-                useNativeDriver: true // Native driver might not support transform on non-layout props for layout animation but works for simple transforms
-            }).start();
+        if (lastUpdate && lastUpdate.type === 'streak_update') {
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
         }
-    }, [loadingUploads, myUploads, fadeAnim]);
+    }, [lastUpdate, queryClient]);
 
-    const handleUpdateProfile = async () => {
-        try {
-            setLoading(true);
-            await apiClient.put("/auth/profile", { name, theme });
-            await showAlert({ title: "Success", message: "Profile updated successfully", type: 'success' });
-            setIsEditing(false);
-        } catch (error: any) {
-            await showAlert({ title: "Error", message: error.message || "Failed to update profile", type: 'error' });
-        } finally {
-            setLoading(false);
-        }
-    };
 
-    const handleChangePassword = async () => {
-        if (!currentPassword || !newPassword) {
-            await showAlert({ title: "Error", message: "Please fill in all password fields", type: 'error' });
-            return;
-        }
-
-        if (newPassword.length < 6) {
-            await showAlert({ title: "Error", message: "New password must be at least 6 characters", type: 'error' });
-            return;
-        }
-
-        try {
-            setLoading(true);
-            await apiClient.post("/auth/change-password", {
-                currentPassword,
-                newPassword,
-            });
-            await showAlert({ title: "Success", message: "Password changed successfully", type: 'success' });
-            setCurrentPassword("");
-            setNewPassword("");
-            setShowPasswordForm(false);
-        } catch (error: any) {
-            await showAlert({ title: "Error", message: error.message || "Failed to change password", type: 'error' });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const isDark = theme === "dark";
-
-    const containerStyle = {
-        backgroundColor: isDark ? '#121212' : '#f3f4f6',
-    };
-
-    const cardStyle = {
-        backgroundColor: isDark ? '#1e1e1e' : '#fff',
-        shadowColor: isDark ? '#000' : '#000',
-    };
-
-    const textStyle = {
-        color: isDark ? '#fff' : '#1f2937',
-    };
-
-    const subTextStyle = {
-        color: isDark ? '#aaa' : '#6b7280',
-    };
-
-    const inputStyle = {
-        backgroundColor: isDark ? '#2d2d2d' : '#f9fafb',
-        borderColor: isDark ? '#444' : '#e5e7eb',
-        color: isDark ? '#fff' : '#1f2937',
-    };
-
-    const renderUploadItem = ({ item, index }: { item: Resource, index: number }) => (
-        <Animated.View
-            style={{
-                opacity: fadeAnim,
-                transform: [{
-                    translateX: fadeAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [20 * (index + 1), 0]
-                    })
-                }]
-            }}
-        >
-            <View style={[styles.uploadCard, cardStyle]}>
-                <TouchableOpacity
-                    onPress={() => Linking.openURL(item.fileUrl).catch(console.error)}
-                    style={{ flex: 1 }}
-                >
-                    <View style={[styles.uploadIcon, { backgroundColor: isDark ? '#2d2d2d' : '#e0e7ff' }]}>
-                        <Text style={{ fontSize: 20 }}>
-                            {item.type === 'note' ? '📝' : item.type === 'syllabus' ? '📚' : '📄'}
-                        </Text>
-                    </View>
-                    <View style={styles.uploadInfo}>
-                        <Text style={[styles.uploadTitle, textStyle]} numberOfLines={1}>{item.title}</Text>
-                        <Text style={[styles.uploadSubtitle, subTextStyle]}>{item.subject}</Text>
-                    </View>
-                </TouchableOpacity>
-                <View
-                    style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginTop: 12,
-                        backgroundColor: isDark ? '#1a1a1a' : '#f9fafb',
-                        paddingVertical: 8,
-                        paddingHorizontal: 12,
-                        borderRadius: 12,
-                        elevation: 2,
-                        shadowColor: '#000',
-                        shadowOpacity: 0.08,
-                        shadowRadius: 3,
-                    }}
-                >
-                    {/* Date */}
-                    <Text
-                        style={{
-                            fontSize: 14,
-                            color: isDark ? '#bdbdbd' : '#4b5563',
-                            fontWeight: '500',
-                        }}
-                    >
-                        {new Date(item.createdAt).toLocaleDateString()}
-                    </Text>
-
-                    {/* Edit Button */}
-                    <TouchableOpacity
-                        onPress={() => navigation.navigate('UploadResource', { resource: item })}
-                        style={{
-                            backgroundColor: isDark ? '#4f46e5' : '#6366f1',
-                            paddingVertical: 6,
-                            paddingHorizontal: 16,
-                            borderRadius: 20,
-                            shadowColor: '#000',
-                            shadowOpacity: 0.12,
-                            shadowRadius: 4,
-                            elevation: 3,
-                        }}
-                    >
-                        <Text
-                            style={{
-                                fontSize: 14,
-                                fontWeight: '600',
-                                color: '#fff',
-                            }}
-                        >
-                            Edit
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
+    if (loadingProfile && !user) {
+        return (
+            <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center' }]}>
+                <ActivityIndicator color={colors.primary} size="large" />
             </View>
+        );
+    }
+
+    const renderStat = (icon: any, value: any, label: string, index: number) => (
+        <Animated.View
+            entering={FadeInDown.delay(200 + index * 100)}
+            style={styles.statItem}
+        >
+            <View style={[styles.statIconContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)' }]}>
+                {icon}
+            </View>
+            <Text style={styles.statValue}>{value}</Text>
+            <Text style={styles.statLabel}>{label}</Text>
         </Animated.View>
     );
 
     return (
-        <View style={[styles.container, { backgroundColor: '#f3f4f6' }]}>
-            <Navbar title="Profile" />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <Navbar title="Profile" transparent />
             <ScrollView
-                style={[styles.container, containerStyle]}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 100 }}
             >
-                <View style={[styles.header, cardStyle]}>
-                    <View style={styles.avatarContainer}>
-                        <Text style={styles.avatarText}>{user?.name?.charAt(0).toUpperCase()}</Text>
+                {/* Header Section */}
+                <View style={styles.header}>
+                    <LinearGradient
+                        colors={isDark ? ['#1e1b4b', '#0f172a'] : ['#6366f1', '#a855f7']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.headerGradient}
+                    />
+
+                    <View style={styles.profileInfo}>
+                        <Animated.View
+                            entering={FadeInDown.duration(800)}
+                            style={styles.avatarContainer}
+                        >
+                            <Text style={styles.avatarText}>{user?.name?.charAt(0).toUpperCase()}</Text>
+                        </Animated.View>
+
+                        <Animated.View entering={FadeInDown.delay(200)} style={{ alignItems: 'center', width: '100%' }}>
+                            <Text style={styles.userName}>{user?.name}</Text>
+                            <Text style={styles.userEmail}>{user?.email}</Text>
+
+                            {user?.college && (
+                                <View style={styles.badgeRow}>
+                                    <BookOpen size={14} color="rgba(255,255,255,0.8)" />
+                                    <Text style={styles.badgeText}>{user.college}</Text>
+                                </View>
+                            )}
+
+                            {user?.bio && (
+                                <View style={styles.bioContainer}>
+                                    <Text style={styles.bioText} numberOfLines={2}>{user.bio}</Text>
+                                </View>
+                            )}
+                        </Animated.View>
+
+                        <View style={styles.statsRow}>
+                            {renderStat(<Flame size={20} color="#fff" />, streakCount, "Current", 0)}
+                            {renderStat(<Flame size={20} color="#ef4444" />, typeof user?.streak === 'object' ? user.streak.highestStreak : 0, "Highest", 1)}
+                            {renderStat(<CheckCircle2 size={20} color="#fff" />, user?.dsaSolved ?? 0, "Solved", 2)}
+                            {renderStat(<UploadCloud size={20} color="#fff" />, user?.resourcesUploaded ?? 0, "Uploads", 3)}
+                        </View>
                     </View>
-                    <Text style={[styles.title, textStyle]}>{user?.name}</Text>
-                    <Text style={[styles.email, subTextStyle]}>{user?.email}</Text>
                 </View>
 
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, textStyle]}>My Uploads</Text>
-                    {loadingUploads ? (
-                        <ActivityIndicator color="#4f46e5" />
-                    ) : myUploads.length > 0 ? (
-                        <FlatList
-                            data={myUploads}
-                            renderItem={({ item, index }) => renderUploadItem({ item, index })}
-                            keyExtractor={item => item._id}
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.uploadsList}
-                        />
-                    ) : (
-                        <Text style={[styles.emptyText, subTextStyle]}>You haven't uploaded anything yet.</Text>
-                    )}
-                </View>
-
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, textStyle]}>Settings</Text>
-
-                    <View style={[styles.card, cardStyle]}>
-                        <Text style={[styles.label, subTextStyle]}>Display Name</Text>
-                        {isEditing ? (
-                            <TextInput
-                                style={[styles.input, inputStyle]}
-                                value={name}
-                                onChangeText={setName}
-                                placeholder="Enter your name"
-                                placeholderTextColor={isDark ? "#888" : "#999"}
-                            />
-                        ) : (
-                            <View style={styles.valueRow}>
-                                <Text style={[styles.valueText, textStyle]}>{name}</Text>
-                                <TouchableOpacity onPress={() => setIsEditing(true)}>
-                                    <Text style={styles.editText}>Edit</Text>
-                                </TouchableOpacity>
+                {/* Content Section */}
+                <View style={styles.content}>
+                    {/* Activity Section */}
+                    <Animated.View entering={FadeInDown.delay(500)}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Learning Activity</Text>
+                        <Card style={styles.activityCard}>
+                            <View style={styles.activityHeader}>
+                                <View>
+                                    <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>Current Streak</Text>
+                                    <Text style={[styles.cardValue, { color: colors.text }]}>
+                                        {streakCount} <Text style={{ fontSize: 16, fontWeight: 'normal' }}>Days</Text>
+                                    </Text>
+                                </View>
+                                <Flame size={32} color={appTheme.light.colors.error} />
                             </View>
-                        )}
-                    </View>
+                            <StreakCalendar calendarData={user?.streakCalendar || []} />
+                        </Card>
+                    </Animated.View>
 
-                    {isEditing && (
-                        <View style={styles.buttonRow}>
-                            <TouchableOpacity
-                                style={[styles.button, styles.cancelButton, { backgroundColor: isDark ? '#2d2d2d' : '#fff', borderColor: isDark ? '#444' : '#d1d5db' }]}
-                                onPress={() => setIsEditing(false)}
-                                disabled={loading}
-                            >
-                                <Text style={[styles.buttonText, styles.cancelButtonText, { color: isDark ? '#fff' : '#374151' }]}>Cancel</Text>
+                    {/* My Uploads */}
+                    <Animated.View entering={FadeInDown.delay(600)} style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={[styles.sectionTitle, { color: colors.text }]}>My Uploads</Text>
+                            <TouchableOpacity onPress={() => navigation.navigate('MyResources')}>
+                                <Text style={{ color: colors.primary, fontWeight: '600' }}>View All</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.button, styles.saveButton, loading && { opacity: 0.7 }]}
-                                onPress={handleUpdateProfile}
-                                disabled={loading}
-                            >
-                                {loading ? (
-                                    <ActivityIndicator color="#FFF" size="small" />
+                        </View>
+
+                        {loadingUploads ? (
+                            <ActivityIndicator color={colors.primary} />
+                        ) : (
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.uploadsList}>
+                                {uploads && uploads.length > 0 ? (
+                                    uploads.map((item: any, index: number) => (
+                                        <Animated.View
+                                            key={item._id}
+                                            entering={FadeInRight.delay(100 * index)}
+                                        >
+                                            <TouchableOpacity
+                                                onPress={() => Linking.openURL(item.fileUrl)}
+                                                style={[styles.uploadCard, { backgroundColor: colors.surface }]}
+                                            >
+                                                <View style={[styles.uploadIconWrap, { backgroundColor: colors.background }]}>
+                                                    <Text style={{ fontSize: 20 }}>{item.type === 'note' ? '📝' : '📚'}</Text>
+                                                </View>
+                                                <Text style={[styles.uploadTitle, { color: colors.text }]} numberOfLines={1}>{item.title}</Text>
+                                                <Text style={[styles.uploadSubject, { color: colors.textSecondary }]}>{item.subject}</Text>
+                                            </TouchableOpacity>
+                                        </Animated.View>
+                                    ))
                                 ) : (
-                                    <Text style={styles.buttonText}>Save Changes</Text>
+                                    <Text style={{ color: colors.textSecondary, marginLeft: 4 }}>No uploads yet</Text>
                                 )}
-                            </TouchableOpacity>
-                        </View>
-                    )}
+                            </ScrollView>
+                        )}
+                    </Animated.View>
 
-                    <View style={[styles.card, cardStyle]}>
-                        <Text style={[styles.label, subTextStyle]}>Theme Preference</Text>
-                        <View style={[styles.themeContainer, { backgroundColor: isDark ? '#2d2d2d' : '#f3f4f6' }]}>
-                            <TouchableOpacity style={[styles.themeOption, theme === 'light' && styles.themeOptionActive, theme === 'light' && { backgroundColor: isDark ? '#444' : '#fff' }]} onPress={() => setTheme('light')}>
-                                <Text style={[styles.themeText, theme === 'light' && styles.themeTextActive, { color: theme === 'light' ? (isDark ? '#fff' : '#1f2937') : '#6b7280' }]}>Light</Text>
+                    {/* Global Statistics Section */}
+                    <Animated.View entering={FadeInDown.delay(650)} style={styles.section}>
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('GlobalStats')}
+                            activeOpacity={0.9}
+                        >
+                            <LinearGradient
+                                colors={['#8b5cf6', '#6366f1']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.statsButton}
+                            >
+                                <View style={styles.statsButtonLeft}>
+                                    <BarChart2 size={24} color="#fff" />
+                                    <View style={{ marginLeft: 16 }}>
+                                        <Text style={styles.statsButtonTitle}>Global Statistics</Text>
+                                        <Text style={styles.statsButtonSubtitle}>See how the community is doing</Text>
+                                    </View>
+                                </View>
+                                <ChevronRight size={20} color="#fff" />
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </Animated.View>
+
+                    {/* Settings Group */}
+                    <Animated.View entering={FadeInDown.delay(700)} style={styles.section}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Account Settings</Text>
+                        <Card style={styles.settingsCard}>
+                            <TouchableOpacity
+                                style={styles.settingsItem}
+                                onPress={() => navigation.navigate('EditProfile')}
+                            >
+                                <View style={styles.settingsItemLeft}>
+                                    <View style={[styles.settingsIcon, { backgroundColor: '#e0e7ff' }]}>
+                                        <Edit3 size={18} color="#4f46e5" />
+                                    </View>
+                                    <Text style={[styles.settingsText, { color: colors.text }]}>Edit Profile</Text>
+                                </View>
+                                <ChevronRight size={20} color={colors.textSecondary} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={[styles.themeOption, theme === 'dark' && styles.themeOptionActive, theme === 'dark' && { backgroundColor: isDark ? '#444' : '#fff' }]} onPress={() => setTheme('dark')}>
-                                <Text style={[styles.themeText, theme === 'dark' && styles.themeTextActive, { color: theme === 'dark' ? (isDark ? '#fff' : '#1f2937') : '#6b7280' }]}>Dark</Text>
+
+                            <TouchableOpacity
+                                style={styles.settingsItem}
+                                onPress={() => setTheme(isDark ? 'light' : 'dark')}
+                            >
+                                <View style={styles.settingsItemLeft}>
+                                    <View style={[styles.settingsIcon, { backgroundColor: isDark ? '#334155' : '#fef3c7' }]}>
+                                        {isDark ? <Moon size={18} color="#94a3b8" /> : <Sun size={18} color="#d97706" />}
+                                    </View>
+                                    <Text style={[styles.settingsText, { color: colors.text }]}>Dark Mode</Text>
+                                </View>
+                                <View style={[styles.toggle, { backgroundColor: isDark ? colors.primary : '#e2e8f0' }]}>
+                                    <View style={[styles.toggleDot, { marginLeft: isDark ? 16 : 2 }]} />
+                                </View>
                             </TouchableOpacity>
-                        </View>
-                    </View>
+
+                            <TouchableOpacity
+                                style={styles.settingsItem}
+                                onPress={() => navigation.navigate('ChangePassword')}
+                            >
+                                <View style={styles.settingsItemLeft}>
+                                    <View style={[styles.settingsIcon, { backgroundColor: '#fef2f2' }]}>
+                                        <Lock size={18} color="#ef4444" />
+                                    </View>
+                                    <Text style={[styles.settingsText, { color: colors.text }]}>Change Password</Text>
+                                </View>
+                                <ChevronRight size={20} color={colors.textSecondary} />
+                            </TouchableOpacity>
+                        </Card>
+                    </Animated.View>
 
                     <TouchableOpacity
-                        style={[styles.accordionHeader, cardStyle]}
-                        onPress={() => setShowPasswordForm(!showPasswordForm)}
+                        style={[styles.logoutButton, { backgroundColor: isDark ? '#1e1b4b' : '#fee2e2' }]}
+                        onPress={logout}
                     >
-                        <Text style={[styles.accordionTitle, textStyle]}>Change Password</Text>
-                        <Text style={{ color: isDark ? '#fff' : '#000' }}>{showPasswordForm ? '▲' : '▼'}</Text>
+                        <LogOut size={20} color="#ef4444" />
+                        <Text style={styles.logoutText}>Sign Out</Text>
                     </TouchableOpacity>
-
-                    {showPasswordForm && (
-                        <View style={[styles.passwordForm, cardStyle]}>
-                            <TextInput
-                                style={[styles.input, inputStyle]}
-                                value={currentPassword}
-                                onChangeText={setCurrentPassword}
-                                secureTextEntry
-                                placeholder="Current Password"
-                                placeholderTextColor={isDark ? "#888" : "#999"}
-                            />
-                            <TextInput
-                                style={[styles.input, inputStyle]}
-                                value={newPassword}
-                                onChangeText={setNewPassword}
-                                secureTextEntry
-                                placeholder="New Password"
-                                placeholderTextColor={isDark ? "#888" : "#999"}
-                            />
-                            <TouchableOpacity
-                                style={[styles.button, styles.changePasswordButton, loading && { opacity: 0.7 }]}
-                                onPress={handleChangePassword}
-                                disabled={loading}
-                            >
-                                {loading ? (
-                                    <ActivityIndicator color="#FFF" size="small" />
-                                ) : (
-                                    <Text style={styles.buttonText}>Update Password</Text>
-                                )}
-                            </TouchableOpacity>
-                        </View>
-                    )}
                 </View>
-
-                <TouchableOpacity style={styles.logoutButton} onPress={() => {
-                    logout();
-                    navigation.navigate("Dashboard");
-                }}>
-                    <Text style={styles.logoutButtonText}>Log Out</Text>
-                </TouchableOpacity>
             </ScrollView>
         </View>
     );
@@ -372,226 +296,263 @@ export default function ProfileScreen({ navigation }: any) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f3f4f6",
     },
     header: {
+        paddingTop: 80,
+        paddingBottom: 40,
+        borderBottomLeftRadius: 40,
+        borderBottomRightRadius: 40,
+        overflow: 'hidden',
+    },
+    headerGradient: {
+        ...StyleSheet.absoluteFillObject,
+    },
+    profileInfo: {
         alignItems: 'center',
-        padding: 30,
-        backgroundColor: '#fff',
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 5,
-        marginBottom: 20,
+        paddingHorizontal: 20,
     },
     avatarContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#4f46e5',
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: 'rgba(255,255,255,0.3)',
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 4,
+        borderColor: 'rgba(255,255,255,0.4)',
         marginBottom: 16,
     },
     avatarText: {
+        fontSize: 42,
+        fontWeight: '800',
         color: '#fff',
-        fontSize: 32,
-        fontWeight: 'bold',
     },
-    title: {
-        fontSize: 24,
-        fontWeight: "bold",
-        color: "#1f2937",
+    userName: {
+        fontSize: 26,
+        fontWeight: '800',
+        color: '#fff',
         marginBottom: 4,
     },
-    email: {
+    userEmail: {
         fontSize: 14,
-        color: "#6b7280",
+        color: 'rgba(255,255,255,0.8)',
+        marginBottom: 8,
     },
-    section: {
-        paddingHorizontal: 20,
-        marginBottom: 24,
+    badgeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 8,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 50,
     },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: "bold",
-        color: "#1f2937",
+    badgeText: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.9)',
+        fontWeight: '500',
+    },
+    bioContainer: {
+        width: '80%',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    bioText: {
+        fontSize: 13,
+        color: 'rgba(255,255,255,0.7)',
+        textAlign: 'center',
+        fontStyle: 'italic',
+        lineHeight: 18,
+    },
+    editContainer: {
+        width: '80%',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    editInput: {
         marginBottom: 12,
-        marginLeft: 4,
+        height: 50,
     },
-    uploadsList: {
-        paddingRight: 20,
+    editActions: {
+        flexDirection: 'row',
+        gap: 12,
     },
-    uploadCard: {
-        backgroundColor: '#fff',
-        padding: 12,
-        borderRadius: 12,
-        marginRight: 12,
-        width: 200,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 2,
-    },
-    uploadIcon: {
-        width: 40,
+    saveBtn: {
         height: 40,
-        backgroundColor: '#e0e7ff',
-        borderRadius: 20,
+        paddingHorizontal: 20,
+    },
+    cancelBtn: {
+        height: 40,
+        paddingHorizontal: 20,
+    },
+    statsRow: {
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'space-around',
+        paddingHorizontal: 10,
+    },
+    statItem: {
+        alignItems: 'center',
+    },
+    statIconContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 8,
     },
-    uploadInfo: {
-        marginBottom: 8,
+    statValue: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#fff',
+    },
+    statLabel: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.7)',
+        textTransform: 'uppercase',
+        fontWeight: '600',
+        marginTop: 2,
+    },
+    content: {
+        padding: 24,
+    },
+    section: {
+        marginTop: 32,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        marginBottom: 16,
+    },
+    activityCard: {
+        padding: 20,
+        borderRadius: 24,
+    },
+    activityHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    cardLabel: {
+        fontSize: 13,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        marginBottom: 4,
+    },
+    cardValue: {
+        fontSize: 32,
+        fontWeight: '800',
+    },
+    uploadsList: {
+        marginHorizontal: -24,
+        paddingHorizontal: 24,
+    },
+    uploadCard: {
+        width: 160,
+        padding: 16,
+        borderRadius: 24,
+        marginRight: 16,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 3,
+    },
+    uploadIconWrap: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
     },
     uploadTitle: {
         fontSize: 14,
-        fontWeight: '600',
-        color: '#1f2937',
+        fontWeight: '700',
+        marginBottom: 4,
     },
-    uploadSubtitle: {
+    uploadSubject: {
         fontSize: 12,
-        color: '#6b7280',
+        fontWeight: '500',
     },
-    uploadDate: {
-        fontSize: 10,
-        color: '#9ca3af',
-        textAlign: 'right',
+    settingsCard: {
+        padding: 8,
+        borderRadius: 24,
     },
-    emptyText: {
-        fontStyle: 'italic',
-        color: '#9ca3af',
-        marginLeft: 4,
-    },
-    card: {
-        backgroundColor: '#fff',
-        padding: 16,
-        borderRadius: 12,
-        marginBottom: 12,
-    },
-    label: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#6b7280',
-        marginBottom: 6,
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-    },
-    valueRow: {
+    settingsItem: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-    },
-    valueText: {
-        fontSize: 16,
-        color: '#1f2937',
-    },
-    editText: {
-        color: '#4f46e5',
-        fontWeight: '600',
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-        borderRadius: 8,
+        justifyContent: 'space-between',
         padding: 12,
-        backgroundColor: '#f9fafb',
-        marginBottom: 12,
     },
-    buttonRow: {
+    settingsItemLeft: {
         flexDirection: 'row',
-        gap: 10,
-        marginBottom: 12,
-    },
-    button: {
-        flex: 1,
-        padding: 14,
-        borderRadius: 8,
         alignItems: 'center',
     },
-    saveButton: {
-        backgroundColor: '#16a34a',
+    settingsIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
     },
-    cancelButton: {
-        backgroundColor: '#fff',
-        borderWidth: 1,
-        borderColor: '#d1d5db',
-    },
-    buttonText: {
-        color: '#fff',
+    settingsText: {
+        fontSize: 15,
         fontWeight: '600',
     },
-    cancelButtonText: {
-        color: '#374151',
+    toggle: {
+        width: 36,
+        height: 20,
+        borderRadius: 10,
+        padding: 2,
     },
-    themeContainer: {
-        flexDirection: 'row',
-        backgroundColor: '#f3f4f6',
-        padding: 4,
+    toggleDot: {
+        width: 16,
+        height: 16,
         borderRadius: 8,
-    },
-    themeOption: {
-        flex: 1,
-        paddingVertical: 8,
-        alignItems: 'center',
-        borderRadius: 6,
-    },
-    themeOptionActive: {
         backgroundColor: '#fff',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 1,
-        elevation: 1,
-    },
-    themeText: {
-        fontSize: 14,
-        color: '#6b7280',
-        fontWeight: '500',
-    },
-    themeTextActive: {
-        color: '#1f2937',
-        fontWeight: '600',
-    },
-    accordionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        marginBottom: 12,
-    },
-    accordionTitle: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#1f2937',
-    },
-    passwordForm: {
-        backgroundColor: '#fff',
-        padding: 16,
-        borderRadius: 12,
-        marginBottom: 12,
-    },
-    changePasswordButton: {
-        backgroundColor: '#f59e0b',
-        marginTop: 8,
     },
     logoutButton: {
-        marginHorizontal: 20,
-        backgroundColor: '#fee2e2',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 40,
         padding: 16,
-        borderRadius: 12,
+        borderRadius: 16,
+        gap: 10,
+    },
+    logoutText: {
+        color: '#ef4444',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    statsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 20,
+        borderRadius: 24,
+    },
+    statsButtonLeft: {
+        flexDirection: 'row',
         alignItems: 'center',
     },
-    logoutButtonText: {
-        color: '#ef4444',
-        fontWeight: '600',
-        fontSize: 16,
+    statsButtonTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: '#fff',
+    },
+    statsButtonSubtitle: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.8)',
     },
 });

@@ -8,6 +8,10 @@ import UploadResourceScreen from "../screens/UploadResourceScreen";
 
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
+import ChangePasswordScreen from "../screens/ChangePasswordScreen";
+import MyResourcesScreen from "../screens/MyResourcesScreen";
+import EditProfileScreen from "../screens/EditProfileScreen";
+import GlobalStatsScreen from "../screens/GlobalStatsScreen";
 import { useAuth } from "../context/AuthContext";
 
 import TabNavigator from "./TabNavigator";
@@ -17,9 +21,13 @@ export type AppStackParamList = {
     Dashboard: undefined;
     Profile: undefined; // Accessible via tabs, but keeping for type safety if direct nav needed
     ResourceList: { type?: string; branch?: string; subject?: string; year?: number };
-    UploadResource: undefined;
+    UploadResource: { resource?: any };
     Login: undefined;
     Register: undefined;
+    ChangePassword: undefined;
+    MyResources: undefined;
+    EditProfile: undefined;
+    GlobalStats: undefined;
 };
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
@@ -66,6 +74,22 @@ export default function AppStack() {
                             animation: 'slide_from_bottom', // Modal-like feel for upload
                             presentation: 'modal' // Optional: native modal presentation
                         }}
+                    />
+                    <Stack.Screen
+                        name="ChangePassword"
+                        component={ChangePasswordScreen}
+                    />
+                    <Stack.Screen
+                        name="MyResources"
+                        component={MyResourcesScreen}
+                    />
+                    <Stack.Screen
+                        name="EditProfile"
+                        component={EditProfileScreen}
+                    />
+                    <Stack.Screen
+                        name="GlobalStats"
+                        component={GlobalStatsScreen}
                     />
                 </>
             ) : (
