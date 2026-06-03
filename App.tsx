@@ -6,6 +6,7 @@ import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { SocketProvider } from './src/context/SocketContext';
 import { ThemeSync } from './src/components/ThemeSync';
 import { AlertProvider } from './src/context/AlertContext';
+import { BookmarkProvider } from './src/context/BookmarkContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient({
@@ -35,7 +36,9 @@ function App(): React.JSX.Element {
         <AlertProvider>
           <AuthProvider>
             <SocketProvider>
-              <AppContent />
+              <BookmarkProvider>
+                <AppContent />
+              </BookmarkProvider>
             </SocketProvider>
           </AuthProvider>
         </AlertProvider>

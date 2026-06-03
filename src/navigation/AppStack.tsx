@@ -12,6 +12,7 @@ import ChangePasswordScreen from "../screens/ChangePasswordScreen";
 import MyResourcesScreen from "../screens/MyResourcesScreen";
 import EditProfileScreen from "../screens/EditProfileScreen";
 import GlobalStatsScreen from "../screens/GlobalStatsScreen";
+import BookmarksScreen from "../screens/BookmarksScreen";
 import { useAuth } from "../context/AuthContext";
 
 import TabNavigator from "./TabNavigator";
@@ -28,6 +29,7 @@ export type AppStackParamList = {
     MyResources: undefined;
     EditProfile: undefined;
     GlobalStats: undefined;
+    Bookmarks: undefined;
 };
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
@@ -90,6 +92,10 @@ export default function AppStack() {
                     <Stack.Screen
                         name="GlobalStats"
                         component={GlobalStatsScreen}
+                    />
+                    <Stack.Screen
+                        name="Bookmarks"
+                        component={BookmarksScreen}
                     />
                 </>
             ) : (

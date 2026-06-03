@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useRef, useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, StatusBar } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, StatusBar, RefreshControl } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import LinearGradient from 'react-native-linear-gradient';
@@ -10,6 +10,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
 import apiClient from "../utils/api";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAlert } from "../context/AlertContext";
 import { useProfile } from "../hooks/useUser";
 import { useQueryClient } from "@tanstack/react-query";
@@ -87,18 +88,25 @@ export default function DashboardScreen() {
             const data = res as any;
             if (data && data.length > 0) {
                 setLatestUpdate(data[0]);
+                await AsyncStorage.setItem('latest_update', JSON.stringify(data[0]));
             }
         } catch (error) {
-            console.log("Error fetching updates", error);
+            const cached = await AsyncStorage.getItem('latest_update');
+            if (cached) setLatestUpdate(JSON.parse(cached));
+            console.log("Error fetching updates, used cache if available", error);
         }
     };
 
     const fetchQuestions = async () => {
         try {
             const res = await apiClient.get('/questions');
-            setQuestions(res as any);
+            const data = res as any;
+            setQuestions(data);
+            await AsyncStorage.setItem('dashboard_questions', JSON.stringify(data));
         } catch (error) {
-            console.log("Error fetching questions", error);
+            const cached = await AsyncStorage.getItem('dashboard_questions');
+            if (cached) setQuestions(JSON.parse(cached));
+            console.log("Error fetching questions, used cache if available", error);
         }
     };
 
@@ -172,7 +180,20 @@ export default function DashboardScreen() {
                 style={styles.headerBackground}
             />
 
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+                contentContainerStyle={styles.scrollContent} 
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl 
+                        refreshing={false} // Would need to wire up a real loading state, but for now just call fetch functions
+                        onRefresh={() => {
+                            fetchLatestUpdate();
+                            fetchQuestions();
+                        }} 
+                        colors={['#6366f1']} 
+                    />
+                }
+            >
                 <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
                     <Text style={[styles.greeting, { color: isDark ? '#ef4444' : '#fff', textShadowColor: 'rgba(0,0,0,0.2)', textShadowRadius: 4 }]}>
                         {displayUser && displayUser.name ? `Hello, ${displayUser.name.split(' ')[0]}!` : 'Hello, Guest!'}
